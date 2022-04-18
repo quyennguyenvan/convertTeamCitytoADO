@@ -1,0 +1,5 @@
+{
+    "nameServices": "generateYamlServices",
+    "DataImportDir": "D:\\Projects\\PIDs\\RWE\\ConvertTeamCitypipelineTools\\DataImport",
+    "DataOutputDir": "D:\\Projects\\PIDs\\RWE\\ConvertTeamCitypipelineTools\\DataOutput"
+}

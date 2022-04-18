@@ -1,0 +1,16 @@
+{
+    "trigger": {
+        "branchs": {
+            "includes": []
+        },
+        "paths": {
+            "includes": []
+        }
+    },
+    "pool": {
+        "vmImage": ""
+    },
+    "variables": [
+        {}
+    ]
+}

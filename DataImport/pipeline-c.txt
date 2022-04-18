@@ -1,0 +1,77 @@
+package _Self.buildTypes
+
+import jetbrains.buildServer.configs.kotlin.v2019_2.*
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.VisualStudioStep
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.nuGetPack
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.nuGetPublish
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.visualStudio
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.VcsTrigger
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
+
+object AaplNetBuild : BuildType({
+    name = "AAPL .NET.Build"
+
+    buildNumberPattern = "1.1.1.%build.counter%"
+
+    params {
+        param("Build_Number", "%build.vcs.number%")
+        param("env.no_proxy", "bitbucket.rwe.com")
+        param("env.https_proxy", "http://rwestproxy-neurathdc.rwe.com:8080")
+        param("nuget.repo.publish", "http://depot.rwe.com:8080/nexus/service/local/nuget/nuget-releases/")
+        param("env.http_proxy", "http://rwestproxy-neurathdc.rwe.com:8080")
+    }
+
+    vcs {
+        root(AaplNet)
+
+        checkoutMode = CheckoutMode.ON_SERVER
+        cleanCheckout = true
+        checkoutDir = "AAPL"
+    }
+
+    steps {
+        visualStudio {
+            name = "Compile Solution"
+            path = "AlgoAudit/RWEST.Trading.Algo.Audit/RWEST.Trading.Algo.Audit.sln"
+            version = VisualStudioStep.VisualStudioVersion.vs2015
+            runPlatform = VisualStudioStep.Platform.x86
+            msBuildVersion = VisualStudioStep.MSBuildVersion.V14_0
+            msBuildToolsVersion = VisualStudioStep.MSBuildToolsVersion.V14_0
+            configuration = "Release"
+        }
+        nuGetPack {
+            toolPath = "%teamcity.tool.NuGet.CommandLine.5.0.2%"
+            paths = "AlgoAudit/RWEST.Trading.Algo.Audit/APPL.NET.nuspec"
+            version = "%build.number%"
+            baseDir = projectPath()
+            outputDir = "output"
+            cleanOutputDir = true
+            publishPackages = true
+        }
+        nuGetPublish {
+            name = "Publish to the official RWE NuGet repository (sonatype)"
+            toolPath = "%teamcity.tool.NuGet.CommandLine.2.8.3%"
+            packages = "output/*.nupkg"
+            serverUrl = "%nuget.repo.publish%"
+            apiKey = "******"
+        }
+    }
+    
+    triggers {
+        vcs {
+            quietPeriodMode = VcsTrigger.QuietPeriodMode.USE_DEFAULT
+            triggerRules = "+:RWEST.Trading.Algo.Audit/**"
+            branchFilter = ""
+        }
+    }
+
+    features {
+        feature {
+            type = "JetBrains.AssemblyInfo"
+        }
+    }
+
+    requirements {
+        contains("system.agent.name", "CFO Build Agent 1.0")
+    }
+})
